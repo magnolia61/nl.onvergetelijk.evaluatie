@@ -1,5 +1,14 @@
 <?php
 
+// === FUNCTIE-INDEX ===
+// Bestand: evaluatie.php
+// Functies in dit bestand:
+//   evaluatie_civicrm_config()     Implements hook_civicrm_config().
+//   evaluatie_civicrm_install()    Implements hook_civicrm_install().
+//   evaluatie_civicrm_enable()     Implements hook_civicrm_enable().
+//   evaluatie_civicrm_customPre()
+// === EINDE FUNCTIE-INDEX ===
+
 require_once 'evaluatie.civix.php';
 
 use CRM_Evaluatie_ExtensionUtil as E;
@@ -34,8 +43,8 @@ function evaluatie_civicrm_enable(): void {
 function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, array &$params): void {
 
     // 1. RECURSIE BEVEILIGING
-    static $is_updating_eval = [];
-    if (isset($is_updating_eval[$entityID])) return; // Beveiliger zegt: "Je bent al binnen!"
+    static $processing_evaluatie_pre = [];
+    if (isset($processing_evaluatie_pre[$entityID])) return; // Beveiliger zegt: "Je bent al binnen!"
 
     $extdebug   = 0;          // 1 = basic // 2 = verbose // 3 = params / 4 = results
     $apidebug   = FALSE;
@@ -46,7 +55,7 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
         return;                             //    if not, get out of here
     }
 
-    watchdog('civicrm_timing', core_microtimer("START EVALUATIE [PRE] voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
+    watchdog('civicrm_timing', base_microtimer("START EVALUATIE [PRE] voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
 
     $profileparteval        = array(146);
     $profilepartevaldeel    = array(209);
@@ -120,6 +129,10 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
     ##########################################################################################
     # CHECK OF DEELNAME PERSOON AAN DIT EVENT OOK IN DIT JAAR IS
     ##########################################################################################
+
+    $ditjaarpart         = 0;
+    $ditjaareventdeelyes = 0;
+    $ditjaareventleidyes = 0;
 
     if (infiscalyear($ditevent_part_kampstart, $today_datetime) == 1) {
         $ditjaarpart = 1;
@@ -1011,7 +1024,7 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
             if ($old_score != $scores_top) {
                 
                 // ACTIVEER RECURSIE STOP (vlag zetten)
-                $is_updating_eval[$entityID] = TRUE;
+                $processing_evaluatie_pre[$entityID] = TRUE;
 
                 $params_part_update = [
                     'checkPermissions' => FALSE,
@@ -1021,16 +1034,16 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
                     ],
                 ];
 
-                watchdog('civicrm_timing', core_microtimer("EXECUTE Evaluatie Update voor $displayname (Nieuwe score: $scores_top)"), NULL, WATCHDOG_DEBUG);
+                watchdog('civicrm_timing', base_microtimer("EXECUTE Evaluatie Update voor $displayname (Nieuwe score: $scores_top)"), NULL, WATCHDOG_DEBUG);
                 
                 civicrm_api4('Participant', 'update', $params_part_update);
                 
                 // VRIJGAVEN (vlag verwijderen)
-                unset($is_updating_eval[$entityID]);
+                unset($processing_evaluatie_pre[$entityID]);
                 
             } else {
                 // TIJDSWINST BEVESTIGD
-                watchdog('civicrm_timing', core_microtimer("SKIP Evaluatie Update (Score ongewijzigd: $old_score) voor $displayname"), NULL, WATCHDOG_DEBUG);
+                watchdog('civicrm_timing', base_microtimer("SKIP Evaluatie Update (Score ongewijzigd: $old_score) voor $displayname"), NULL, WATCHDOG_DEBUG);
             }
         }
         
@@ -1057,6 +1070,6 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
     ### EVALUATIE PART [PRE]                                          [EINDE]
     #########################################################################
 
-    watchdog('civicrm_timing', core_microtimer("EINDE EVALUATIE [PRE] voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
+    watchdog('civicrm_timing', base_microtimer("EINDE EVALUATIE [PRE] voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
 
 }
