@@ -1,13 +1,15 @@
 <?php
 
-// === FUNCTIE-INDEX ===
-// Bestand: evaluatie.php
-// Functies in dit bestand:
-//   evaluatie_civicrm_config()     Implements hook_civicrm_config().
-//   evaluatie_civicrm_install()    Implements hook_civicrm_install().
-//   evaluatie_civicrm_enable()     Implements hook_civicrm_enable().
-//   evaluatie_civicrm_customPre()
-// === EINDE FUNCTIE-INDEX ===
+/**
+ * =======================================================================================
+ * FUNCTIE-INDEX: evaluatie.php
+ * =======================================================================================
+ *   evaluatie_civicrm_config()     Implements hook_civicrm_config().
+ *   evaluatie_civicrm_install()    Implements hook_civicrm_install().
+ *   evaluatie_civicrm_enable()     Implements hook_civicrm_enable().
+ *   evaluatie_civicrm_customPre()
+ * =======================================================================================
+ */
 
 require_once 'evaluatie.civix.php';
 
