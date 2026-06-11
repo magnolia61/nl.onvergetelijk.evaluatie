@@ -108,7 +108,7 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
         return;
     }
 
-    $extdebug    = 0;
+    $extdebug = 'evaluatie.custompre'; // Kanaal voor centrale debug-config; niveau wordt opgezocht in ozk.debug.config.php
     $group_eval  = [146];
     $group_leid  = [168];
     $group_deel  = [209];
@@ -158,7 +158,7 @@ function evaluatie_civicrm_customPre(string $op, int $groupID, int $entityID, ar
 
     // --- STAP 3.0: RESULTATEN TERUGSTOPPEN IN HET FORMULIER (bijv. genormaliseerde datum) ---
     if (!empty($data_to_inject) && !empty($field_ids)) {
-        $success_list = base_inject_params($params, $data_to_inject, $field_ids, $entityID, "EVALUATIE");
+        $success_list = base_inject_params($params, $data_to_inject, $field_ids, $entityID, "EVALUATIE", $extdebug);
 
         if (!empty($success_list)) {
             wachthond($extdebug, 1, "EVALUATIE [PRE] SUCCES: Injectie voltooid", $success_list);
@@ -194,9 +194,12 @@ function evaluatie_civicrm_configure(int $participant_id, int $groupID, array $p
         return [];
     }
 
-    $extdebug  = 0;
+    $extdebug = 'evaluatie.configure'; // Kanaal voor centrale debug-config; niveau wordt opgezocht in ozk.debug.config.php
     $apidebug  = FALSE;
     $processing_evaluatie_configure = TRUE;
+
+    // --- TIMING START ---
+    watchdog('civicrm_timing', base_microtimer("START EVALUATIE CONFIGURE voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
 
     $data_to_inject = [];
     $today_datetime = date("Y-m-d H:i:s");
@@ -208,6 +211,8 @@ function evaluatie_civicrm_configure(int $participant_id, int $groupID, array $p
     // 1. Participant info ophalen via base-helper (bevat kampstart, kampeinde, fiscalyear, etc.)
     $array_partditevent = base_pid2part($participant_id);
     wachthond($extdebug, 3, 'array_partditevent', $array_partditevent);
+
+    watchdog('civicrm_timing', base_microtimer("STAP 1: base_pid2part voltooid"), NULL, WATCHDOG_DEBUG);
 
     $contact_id                 = $array_partditevent['contact_id']             ?? NULL;
     $displayname                = $array_partditevent['displayname']            ?? NULL;
@@ -260,6 +265,8 @@ function evaluatie_civicrm_configure(int $participant_id, int $groupID, array $p
     wachthond($extdebug, 3, 'ditjaarpart',         $ditjaarpart);
     wachthond($extdebug, 3, 'ditjaareventdeelyes', $ditjaareventdeelyes);
     wachthond($extdebug, 3, 'ditjaareventleidyes', $ditjaareventleidyes);
+
+    watchdog('civicrm_timing', base_microtimer("STAP 2: base_find_allpart voltooid"), NULL, WATCHDOG_DEBUG);
 
     wachthond($extdebug, 2, "########################################################################");
     wachthond($extdebug, 1, "### EVALUATIE CONFIGURE - 3.0 SCORE BEREKENING",           "[SCORES]");
@@ -430,6 +437,8 @@ function evaluatie_civicrm_configure(int $participant_id, int $groupID, array $p
         wachthond($extdebug, 1, 'scores_leid_low', $scores_leid_low);
         wachthond($extdebug, 1, 'scores_leid_top', $scores_leid_top);
     }
+
+    watchdog('civicrm_timing', base_microtimer("STAP 3: Score berekening voltooid"), NULL, WATCHDOG_DEBUG);
 
     wachthond($extdebug, 2, "########################################################################");
     wachthond($extdebug, 1, "### EVALUATIE CONFIGURE - 4.0 ACTIVITEIT BEHEREN",        "[ACTIVITY]");
@@ -706,6 +715,9 @@ function evaluatie_civicrm_configure(int $participant_id, int $groupID, array $p
             }
         }
     }
+
+    // --- TIMING EINDE ---
+    watchdog('civicrm_timing', base_microtimer("EINDE EVALUATIE CONFIGURE voor entityID: $entityID"), NULL, WATCHDOG_DEBUG);
 
     wachthond($extdebug, 2, "########################################################################");
     wachthond($extdebug, 1, "### EVALUATIE CONFIGURE - EINDE",          "[$displayname $ditevent_part_kampkort]");
